@@ -1,0 +1,73 @@
+{
+  "name": "osito-dex-screener-adapter",
+  "version": "1.0.0",
+  "description": "DEX Screener adapter for Osito protocol - enables tracking of Osito swap data on Berachain",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "bin": {
+    "osito-dex-adapter": "dist/server.js"
+  },
+  "files": [
+    "dist/",
+    "src/",
+    "scripts/",
+    "Dockerfile",
+    "docker-compose.yml",
+    "deploy.sh",
+    "env.example",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
+    "get-cores": "ts-node scripts/get-core-addresses.ts",
+    "test": "echo \"Error: no test specified\" && exit 0",
+    "prepare": "npm run build",
+    "lint": "echo \"Linting not configured\" && exit 0",
+    "docker:build": "docker build -t osito-dex-screener-adapter .",
+    "docker:run": "docker-compose up -d",
+    "docker:stop": "docker-compose down"
+  },
+  "dependencies": {
+    "ethers": "^6.8.0",
+    "express": "^4.18.2",
+    "lru-cache": "^10.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.5.0",
+    "typescript": "^5.1.6",
+    "ts-node": "^10.9.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Genmin/osito-dex-screener-adapter.git"
+  },
+  "homepage": "https://github.com/Genmin/osito-dex-screener-adapter#readme",
+  "bugs": {
+    "url": "https://github.com/Genmin/osito-dex-screener-adapter/issues"
+  },
+  "keywords": [
+    "dex",
+    "screener",
+    "osito",
+    "adapter",
+    "berachain",
+    "defi",
+    "blockchain",
+    "swap",
+    "liquidity",
+    "api",
+    "typescript",
+    "express",
+    "ethereum"
+  ],
+  "author": "Osito Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+} 

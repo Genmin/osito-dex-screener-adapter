@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  osito-dex-adapter:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - RPC_URL=${RPC_URL}
+      - CHAIN_ID=${CHAIN_ID:-80085}
+      - PORT=3000
+      - CORES=${CORES}
+      - WBERA_ADDRESS=${WBERA_ADDRESS}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3" 
