@@ -1,5 +1,5 @@
 import { JsonRpcProvider, Contract, formatUnits } from "ethers";
-import LRU from "lru-cache";
+import { LRUCache } from "lru-cache";
 import express from "express";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -25,7 +25,7 @@ const CORE_ABI = [
 ];
 
 // small 100-block cache
-const blockCache = new LRU<number, any[]>({ max: 100 });
+const blockCache = new LRUCache<number, any[]>({ max: 100 });
 
 const app = express();
 
@@ -165,7 +165,8 @@ app.get("/events", async (req, res) => {
       const tokDecimals = await getAssetDecimals(tokAdr);
       const wberaDecimals = 18;
       
-      const topic0 = core.interface.getEvent("Swap").topicHash;
+      const topic0 = core.interface.getEvent("Swap")?.topicHash;
+      if (!topic0) continue;
 
       const logs = await RPC.getLogs({ 
         address: coreAddr, 
@@ -204,7 +205,7 @@ app.get("/events", async (req, res) => {
           eventType: "swap",
           txnId: log.transactionHash,
           txnIndex: log.transactionIndex || 0,
-          eventIndex: log.logIndex || 0,
+          eventIndex: (log as any).logIndex || 0,
           maker: u,
           pairId: coreAddr,
           priceNative: price.toString()
