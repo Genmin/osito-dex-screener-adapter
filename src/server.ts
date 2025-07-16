@@ -12,7 +12,7 @@ const PORT = Number(process.env.PORT ?? 3000);
 const CORES = process.env.CORES?.split(',') || [];
 
 const WBERA = {
-  id:      process.env.WBERA_ADDRESS || "0x7507c1dc16935B82698e4C63f2746A5fCf994dF8",
+  id:      process.env.WBERA_ADDRESS || "0x6969696969696969696969696969696969696969",
   name:    "Wrapped BERA",
   symbol:  "WBERA",
   decimals: 18
@@ -20,7 +20,10 @@ const WBERA = {
 
 const CORE_ABI = [
   "event Swap(address indexed u,bool tokIn,uint256 inAmt,uint256 outAmt,uint256 feeTok)",
-  "function TOK() view returns(address)",
+  "function name() view returns(string)",
+  "function symbol() view returns(string)",
+  "function decimals() view returns(uint8)",
+  "function totalSupply() view returns(uint256)",
   "function R() view returns(uint128 T,uint128 Q,uint128,uint128)"
 ];
 
@@ -98,7 +101,7 @@ app.get("/asset", async (req, res) => {
         name,
         symbol,
         totalSupply: supply.toString(),
-        decimals,
+        decimals: Number(decimals),
         metadata: { chainId: CHA.toString() }
       });
     }
@@ -123,7 +126,7 @@ app.get("/pair", async (req, res) => {
     }
 
     const con = new Contract(core, CORE_ABI, RPC);
-    const tok = (await con.TOK()) as string;
+    const tok = core; // Core IS the token in Osito architecture
 
     // deterministic ordering (alphabetical)
     const [asset0Id, asset1Id] = [tok, WBERA.id].sort((a, b) => a.localeCompare(b));
@@ -158,7 +161,7 @@ app.get("/events", async (req, res) => {
 
     for (const coreAddr of CORES) {
       const core = new Contract(coreAddr, CORE_ABI, RPC);
-      const tokAdr = (await core.TOK()) as string;
+      const tokAdr = coreAddr; // Core IS the token in Osito architecture
       const [asset0Id, asset1Id] = [tokAdr, WBERA.id].sort((a, b) => a.localeCompare(b));
       
       // Get asset decimals
