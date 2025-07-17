@@ -3,7 +3,7 @@
 # Test script for Osito DEX Screener Adapter
 # Run this to verify all endpoints are working correctly
 
-BASE_URL="http://localhost:3001"
+BASE_URL="http://localhost:3002"
 
 echo "🎯 Testing Osito DEX Screener Adapter Endpoints"
 echo "================================================="
@@ -24,29 +24,19 @@ echo "💰 WBERA Asset:"
 curl -s "$BASE_URL/asset?id=0x6969696969696969696969696969696969696969" | jq '.'
 echo ""
 
-# TestCoin A Asset  
-echo "🪙 TestCoin A Asset:"
-curl -s "$BASE_URL/asset?id=0x07974f37167524b0b56da29b5b437014c5626797" | jq '.'
+# TestToken Asset  
+echo "🪙 TestToken Asset:"
+curl -s "$BASE_URL/asset?id=0x63983bf08eaeb83454ea661830a4fba89485b7fb" | jq '.'
 echo ""
 
-# TestCoin B Asset
-echo "🪙 TestCoin B Asset:" 
-curl -s "$BASE_URL/asset?id=0xfc363be22236d5034381b08e17c4e763b8334c79" | jq '.'
-echo ""
-
-# Core A Pair
-echo "🔄 Core A Pair (TESTA/WBERA):"
-curl -s "$BASE_URL/pair?id=0xf7907d94a1faa79f3f552a9f3ca2b82a27d31f09" | jq '.'
-echo ""
-
-# Core B Pair  
-echo "🔄 Core B Pair (TESTB/WBERA):"
-curl -s "$BASE_URL/pair?id=0xbd4bd1d5b9954f8acb98cea90e48392ef3a9a0fe" | jq '.'
+# TestToken Pair
+echo "🔄 TestToken Pair (TEST/WBERA):"
+curl -s "$BASE_URL/pair?id=0x63983bf08eaeb83454ea661830a4fba89485b7fb" | jq '.'
 echo ""
 
 # Swap Events
 echo "📈 Recent Swap Events:"
-curl -s "$BASE_URL/events?fromBlock=6063000&toBlock=6063200" | jq '.'
+curl -s "$BASE_URL/events?fromBlock=6863000&toBlock=6863182" | jq '.'
 echo ""
 
 # Error Cases

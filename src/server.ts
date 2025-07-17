@@ -19,12 +19,12 @@ const WBERA = {
 };
 
 const CORE_ABI = [
-  "event Swap(address indexed u,bool tokIn,uint256 inAmt,uint256 outAmt,uint256 feeTok)",
+  "event Swap(bool indexed tokIn,uint256 amountIn,uint256 amountOut,uint256 feeQT)",
   "function name() view returns(string)",
   "function symbol() view returns(string)",
   "function decimals() view returns(uint8)",
   "function totalSupply() view returns(uint256)",
-  "function R() view returns(uint128 T,uint128 Q,uint128,uint128)"
+  "function R() view returns(uint128 T,uint128 Q,uint128 B)"
 ];
 
 // small 100-block cache
@@ -180,7 +180,7 @@ app.get("/events", async (req, res) => {
 
       for (const log of logs) {
         const { args } = core.interface.parseLog(log)!;
-        const [u, tokIn, inAmt, outAmt] = args;
+        const [tokIn, amountIn, amountOut, feeQT] = args;
         const block = await RPC.getBlock(log.blockNumber);
         
         if (!block) continue;
@@ -189,13 +189,13 @@ app.get("/events", async (req, res) => {
         let price: number;
         if (tokIn) {
           // Token in, WBERA out
-          const tokAmount = Number(formatUnits(inAmt, tokDecimals));
-          const wberaAmount = Number(formatUnits(outAmt, wberaDecimals));
+          const tokAmount = Number(formatUnits(amountIn, tokDecimals));
+          const wberaAmount = Number(formatUnits(amountOut, wberaDecimals));
           price = asset0Id === tokAdr ? wberaAmount / tokAmount : tokAmount / wberaAmount;
         } else {
           // WBERA in, Token out
-          const wberaAmount = Number(formatUnits(inAmt, wberaDecimals));
-          const tokAmount = Number(formatUnits(outAmt, tokDecimals));
+          const wberaAmount = Number(formatUnits(amountIn, wberaDecimals));
+          const tokAmount = Number(formatUnits(amountOut, tokDecimals));
           price = asset0Id === tokAdr ? wberaAmount / tokAmount : tokAmount / wberaAmount;
         }
 
@@ -209,7 +209,7 @@ app.get("/events", async (req, res) => {
           txnId: log.transactionHash,
           txnIndex: log.transactionIndex || 0,
           eventIndex: (log as any).logIndex || 0,
-          maker: u,
+          maker: "0x0000000000000000000000000000000000000000", // User address not available in current event
           pairId: coreAddr,
           priceNative: price.toString()
         };
@@ -217,19 +217,19 @@ app.get("/events", async (req, res) => {
         // Set in/out amounts respecting sorted order
         if (tokIn) {
           if (asset0Id === tokAdr) {
-            swapObj.asset0In = formatUnits(inAmt, tokDecimals);
-            swapObj.asset1Out = formatUnits(outAmt, wberaDecimals);
+            swapObj.asset0In = formatUnits(amountIn, tokDecimals);
+            swapObj.asset1Out = formatUnits(amountOut, wberaDecimals);
           } else {
-            swapObj.asset1In = formatUnits(inAmt, tokDecimals);
-            swapObj.asset0Out = formatUnits(outAmt, wberaDecimals);
+            swapObj.asset1In = formatUnits(amountIn, tokDecimals);
+            swapObj.asset0Out = formatUnits(amountOut, wberaDecimals);
           }
         } else {
           if (asset0Id === tokAdr) {
-            swapObj.asset1In = formatUnits(inAmt, wberaDecimals);
-            swapObj.asset0Out = formatUnits(outAmt, tokDecimals);
+            swapObj.asset1In = formatUnits(amountIn, wberaDecimals);
+            swapObj.asset0Out = formatUnits(amountOut, tokDecimals);
           } else {
-            swapObj.asset0In = formatUnits(inAmt, wberaDecimals);
-            swapObj.asset1Out = formatUnits(outAmt, tokDecimals);
+            swapObj.asset0In = formatUnits(amountIn, wberaDecimals);
+            swapObj.asset1Out = formatUnits(amountOut, tokDecimals);
           }
         }
 
