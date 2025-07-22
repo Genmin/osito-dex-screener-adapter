@@ -8,12 +8,27 @@ dotenv.config();
 
 // Validate required environment variables at startup
 function validateEnvironment() {
-  const required = ['RPC_URL', 'CHAIN_ID', 'CORES', 'WBERA_ADDRESS'];
+  const required = ['RPC_URL', 'CHAIN_ID', 'WBERA_ADDRESS'];
   const missing = required.filter(key => !process.env[key]);
   
   if (missing.length > 0) {
     console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
     process.exit(1);
+  }
+  
+  // CORES is optional - will be empty initially
+  const cores = (process.env.CORES || '').split(',').map(addr => addr.trim()).filter(addr => addr);
+  
+  if (cores.length === 0) {
+    console.log(`⚠️ No CORES configured. Adapter will be ready once tokens are launched.`);
+  } else {
+    // Validate CORES addresses if any are provided
+    const invalidCores = cores.filter(addr => !isAddress(addr));
+    if (invalidCores.length > 0) {
+      console.error(`❌ Invalid CORES addresses: ${invalidCores.join(', ')}`);
+      process.exit(1);
+    }
+    console.log(`✅ Found ${cores.length} core addresses.`);
   }
   
   // Validate WBERA address format
@@ -22,15 +37,7 @@ function validateEnvironment() {
     process.exit(1);
   }
   
-  // Validate CORES addresses
-  const cores = process.env.CORES!.split(',').map(addr => addr.trim());
-  const invalidCores = cores.filter(addr => !isAddress(addr));
-  if (invalidCores.length > 0) {
-    console.error(`❌ Invalid CORES addresses: ${invalidCores.join(', ')}`);
-    process.exit(1);
-  }
-  
-  console.log(`✅ Environment validation passed. Found ${cores.length} core addresses.`);
+  console.log(`✅ Environment validation passed.`);
 }
 
 validateEnvironment();
@@ -40,7 +47,7 @@ const CHA  = Number(process.env.CHAIN_ID);
 const PORT = Number(process.env.PORT ?? 3000);
 
 // Parse CORES from environment variable
-const CORES = process.env.CORES?.split(',') || [];
+const CORES = (process.env.CORES || '').split(',').map(addr => addr.trim()).filter(addr => addr);
 
 const WBERA = {
   id:      process.env.WBERA_ADDRESS || "0x6969696969696969696969696969696969696969",
@@ -202,7 +209,7 @@ app.get("/pair", async (req, res) => {
       return res.status(400).json({ error: "Invalid pair address format" });
     }
     
-    if (!CORES.includes(core)) {
+    if (!CORES.map(addr => addr.toLowerCase()).includes(core)) {
       return res.status(404).json({ error: "Pair not found" });
     }
 
@@ -436,40 +443,48 @@ app.get("/health", async (_req, res) => {
   }
 });
 
-// Start server with graceful shutdown
-const server = app.listen(PORT, () => {
-  console.log(`✅ Osito DEX Screener Adapter listening on port ${PORT}`);
+// Start server only when not in serverless environment (like Vercel)
+if (process.env.VERCEL !== '1' && require.main === module) {
+  const server = app.listen(PORT, () => {
+    console.log(`✅ Osito DEX Screener Adapter listening on port ${PORT}`);
+    console.log(`📊 Chain ID: ${CHA}`);
+    console.log(`🌐 RPC URL: ${process.env.RPC_URL}`);
+    console.log(`💎 Tracking ${CORES.length} core contracts`);
+    console.log(`🚀 Server ready for DexScreener integration`);
+  });
+
+  // Graceful shutdown handling
+  process.on('SIGTERM', () => {
+    console.log('🔄 SIGTERM received, shutting down gracefully...');
+    server.close(() => {
+      console.log('✅ Server closed. Goodbye!');
+      process.exit(0);
+    });
+  });
+
+  process.on('SIGINT', () => {
+    console.log('🔄 SIGINT received, shutting down gracefully...');
+    server.close(() => {
+      console.log('✅ Server closed. Goodbye!');
+      process.exit(0);
+    });
+  });
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (error) => {
+    console.error('💥 Uncaught Exception:', error);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+  });
+} else {
+  console.log(`🔧 Running in serverless mode`);
   console.log(`📊 Chain ID: ${CHA}`);
-  console.log(`🌐 RPC URL: ${process.env.RPC_URL}`);
   console.log(`💎 Tracking ${CORES.length} core contracts`);
-  console.log(`🚀 Server ready for DexScreener integration`);
-});
+  console.log(`🚀 Serverless function ready for DexScreener integration`);
+}
 
-// Graceful shutdown handling
-process.on('SIGTERM', () => {
-  console.log('🔄 SIGTERM received, shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ Server closed. Goodbye!');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('🔄 SIGINT received, shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ Server closed. Goodbye!');
-    process.exit(0);
-  });
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('💥 Uncaught Exception:', error);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
 export default app; 

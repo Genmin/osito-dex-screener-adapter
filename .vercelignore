@@ -1,0 +1,9 @@
+node_modules
+src
+scripts
+tests
+.env
+.env.local
+.env.example
+*.md
+!README.md
